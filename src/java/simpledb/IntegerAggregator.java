@@ -62,7 +62,6 @@ public class IntegerAggregator implements Aggregator {
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        System.out.printf("merge tuple %s\n", tup.toString());
         Group group;
         if (gbfield == NO_GROUPING) {
             group = singleValue;
