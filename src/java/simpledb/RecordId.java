@@ -49,7 +49,7 @@ public class RecordId implements Serializable {
     public boolean equals(Object o) {
         if (o instanceof RecordId) {
             RecordId id = (RecordId) o;
-            return id.tupleNo == this.tupleNo;
+            return pageId.equals(id.pageId) && id.tupleNo == this.tupleNo;
         }
         return false;
     }
@@ -62,7 +62,7 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-        return this.pageId.hashCode() * 31 + tupleNo;
+        return this.pageId.hashCode() * 31 + Integer.hashCode(tupleNo);
     }
 
 }

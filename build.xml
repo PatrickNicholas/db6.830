@@ -253,6 +253,9 @@
             <test name="simpledb.TupleTest"/>
             <test name="simpledb.TupleDescTest"/>
             <test name="simpledb.CatalogTest"/>
+            <test name="simpledb.HeapPageIdTest"/>
+            <test name="simpledb.RecordIdTest"/>
+            <test name="simpledb.HeapFileReadTest"/>
         </RunJunit>
     </target>
 
