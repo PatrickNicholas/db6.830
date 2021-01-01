@@ -44,8 +44,8 @@ public class HeapPage implements Page {
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-        System.out.printf("HeapPage table: %d page: %d, num slot: %d, header: %d\n",
-                id.getTableId(), id.getPageNumber(), this.numSlots, getHeaderSize());
+//        System.out.printf("HeapPage table: %d page: %d, num slot: %d, header: %d\n",
+//                id.getTableId(), id.getPageNumber(), this.numSlots, getHeaderSize());
 
         // allocate and read the header slots of this page
         header = new byte[getHeaderSize()];
@@ -355,8 +355,8 @@ public class HeapPage implements Page {
             if (this.currentSlot >= HeapPage.this.numSlots) {
                 throw new NoSuchElementException();
             }
-            System.out.printf("tuple of page: %d slot: %d\n",
-                    HeapPage.this.pid.getPageNumber(), this.currentSlot);
+//            System.out.printf("tuple of page: %d slot: %d\n",
+//                    HeapPage.this.pid.getPageNumber(), this.currentSlot);
             return HeapPage.this.tuples[this.currentSlot];
         }
     }

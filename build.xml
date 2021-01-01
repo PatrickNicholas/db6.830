@@ -292,7 +292,7 @@
             <test name="simpledb.systemtest.ScanTest"/>
             <test name="simpledb.systemtest.FilterTest"/>
             <test name="simpledb.systemtest.JoinTest"/>
-            <test name="simpledb.systemtest.AggragateTest"/>
+            <test name="simpledb.systemtest.AggregateTest"/>
         </RunJunit>
     </target>
 
