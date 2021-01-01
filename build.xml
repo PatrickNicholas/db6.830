@@ -286,9 +286,10 @@
             <test name="simpledb.JoinPredicateTest"/>
             <test name="simpledb.FilterTest"/>
             <test name="simpledb.JoinTest"/>
-            <test name="simpledb.systemtest.ScanTest"/>
-            <test name="simpledb.systemtest.FilterTest"/>
-            <test name="simpledb.systemtest.JoinTest"/>
+            <test name="simpledb.IntegerAggregatorTest"/>
+<!--            <test name="simpledb.systemtest.ScanTest"/>-->
+<!--            <test name="simpledb.systemtest.FilterTest"/>-->
+<!--            <test name="simpledb.systemtest.JoinTest"/>-->
         </RunJunit>
     </target>
 
