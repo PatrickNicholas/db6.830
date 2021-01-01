@@ -1,6 +1,9 @@
 package simpledb;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * The Join operator implements the relational join operation.
@@ -9,66 +12,80 @@ public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
 
+    private TupleDesc desc;
+    private JoinPredicate predicate;
+    private OpIterator left;
+    private OpIterator right;
+    private Tuple leftTuple, rightTuple;
+
     /**
      * Constructor. Accepts two children to join and the predicate to join them
      * on
-     * 
-     * @param p
-     *            The predicate to use to join the children
-     * @param child1
-     *            Iterator for the left(outer) relation to join
-     * @param child2
-     *            Iterator for the right(inner) relation to join
+     *
+     * @param p      The predicate to use to join the children
+     * @param child1 Iterator for the left(outer) relation to join
+     * @param child2 Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, OpIterator child1, OpIterator child2) {
-        // some code goes here
+        this.desc = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
+        this.predicate = p;
+        this.left = child1;
+        this.right = child2;
     }
 
     public JoinPredicate getJoinPredicate() {
-        // some code goes here
-        return null;
+        return this.predicate;
     }
 
     /**
-     * @return
-     *       the field name of join field1. Should be quantified by
-     *       alias or table name.
-     * */
+     * @return the field name of join field1. Should be quantified by
+     * alias or table name.
+     */
     public String getJoinField1Name() {
-        // some code goes here
-        return null;
+        int f1 = this.predicate.getField1();
+
+        String leftName = this.left.getTupleDesc().getFieldName(f1);
+        return String.join(".", leftName);
     }
 
     /**
-     * @return
-     *       the field name of join field2. Should be quantified by
-     *       alias or table name.
-     * */
+     * @return the field name of join field2. Should be quantified by
+     * alias or table name.
+     */
     public String getJoinField2Name() {
-        // some code goes here
-        return null;
+        int f2 = this.predicate.getField2();
+        String rightName = this.right.getTupleDesc().getFieldName(f2);
+        return String.join(".", rightName);
     }
 
     /**
      * @see simpledb.TupleDesc#merge(TupleDesc, TupleDesc) for possible
-     *      implementation logic.
+     * implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return desc;
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        this.left.open();
+        this.right.open();
+        leftTuple = null;
+        rightTuple = null;
+        super.open();
     }
 
     public void close() {
-        // some code goes here
+        this.left.close();
+        this.right.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        close();
+        open();
+        this.left.rewind();
+        this.right.rewind();
     }
 
     /**
@@ -85,24 +102,55 @@ public class Join extends Operator {
      * <p>
      * For example, if one tuple is {1,2,3} and the other tuple is {1,5,6},
      * joined on equality of the first column, then this returns {1,2,3,1,5,6}.
-     * 
+     *
      * @return The next matching tuple.
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        while (true) {
+            if (leftTuple == null) {
+                if (!this.left.hasNext()) {
+                    // left finished.
+                    return null;
+                }
+                leftTuple = this.left.next();
+            }
+            if (rightTuple == null) {
+                if (!this.right.hasNext()) {
+                    this.right.rewind();
+
+                    // fast exit if right is empty.
+                    if (!this.right.hasNext()) {
+                        return null;
+                    }
+
+                    // Start next round loop: switch left to right.
+                    leftTuple = null;
+                    continue;
+                }
+                rightTuple = this.right.next();
+            }
+
+            Tuple t = rightTuple;
+            rightTuple = null;
+            if (this.predicate.filter(leftTuple, t)) {
+                Field[] fields = Field.concat(leftTuple.fields(), t.fields())
+                        .toArray(Field[]::new);
+                return new Tuple(desc, fields);
+            }
+        }
     }
 
     @Override
     public OpIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return Arrays.asList(this.left, this.right).toArray(OpIterator[]::new);
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-        // some code goes here
+        assert children.length == 2;
+        this.left = children[0];
+        this.right = children[1];
     }
 
 }

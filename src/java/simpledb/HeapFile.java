@@ -66,8 +66,6 @@ public class HeapFile implements DbFile {
         int pageNumber = pid.getPageNumber();
         int pageSize = BufferPool.getPageSize();
         int offset = pageSize * pageNumber;
-        System.out.printf("read table %d, page size: %d, page number: %d\n",
-                    pid.getTableId(), pageSize, pageNumber);
         try {
             RandomAccessFile file = new RandomAccessFile(this.file, "r");
             file.seek(offset);
