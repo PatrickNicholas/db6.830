@@ -252,6 +252,7 @@
         <RunJunit>
             <test name="simpledb.TupleTest"/>
             <test name="simpledb.TupleDescTest"/>
+            <test name="simpledb.CatalogTest"/>
         </RunJunit>
     </target>
 
