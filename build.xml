@@ -256,6 +256,7 @@
             <test name="simpledb.HeapPageIdTest"/>
             <test name="simpledb.RecordIdTest"/>
             <test name="simpledb.HeapFileReadTest"/>
+            <test name="simpledb.systemtest.ScanTest"/>
         </RunJunit>
     </target>
 
