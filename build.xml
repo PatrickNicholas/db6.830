@@ -293,10 +293,13 @@
             <test name="simpledb.HeapPageWriteTest"/>
             <test name="simpledb.HeapFileWriteTest"/>
             <test name="simpledb.BufferPoolWriteTest"/>
+            <test name="simpledb.InsertTest"/>
             <test name="simpledb.systemtest.ScanTest"/>
             <test name="simpledb.systemtest.FilterTest"/>
             <test name="simpledb.systemtest.JoinTest"/>
             <test name="simpledb.systemtest.AggregateTest"/>
+            <test name="simpledb.systemtest.DeleteTest"/>
+            <test name="simpledb.systemtest.InsertTest"/>
         </RunJunit>
     </target>
 
