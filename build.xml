@@ -291,6 +291,8 @@
             <test name="simpledb.StringAggregatorTest"/>
             <test name="simpledb.AggregateTest"/>
             <test name="simpledb.HeapPageWriteTest"/>
+            <test name="simpledb.HeapFileWriteTest"/>
+            <test name="simpledb.BufferPoolWriteTest"/>
             <test name="simpledb.systemtest.ScanTest"/>
             <test name="simpledb.systemtest.FilterTest"/>
             <test name="simpledb.systemtest.JoinTest"/>

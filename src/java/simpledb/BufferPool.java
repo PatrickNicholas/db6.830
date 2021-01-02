@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -79,7 +80,7 @@ public class BufferPool {
             Page page = this.pages.get(pid);
             if (page == null) {
                 if (this.pages.size() > numPages) {
-                   throw new DbException("too many pages");
+                    throw new DbException("too many pages");
                 }
                 // FIXME(patrick) performance.
                 Catalog log = Database.getCatalog();
@@ -154,8 +155,16 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        Catalog log = Database.getCatalog();
+        DbFile file = log.getDatabaseFile(tableId);
+        // TODO(patrick) delete tuples will acquire lock.
+        ArrayList<Page> pages = file.insertTuple(tid, t);
+        synchronized (this) {
+            for (Page page : pages) {
+                page.markDirty(true, tid);
+                this.pages.put(page.getId(), page);
+            }
+        }
     }
 
     /**
@@ -173,8 +182,17 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        Catalog log = Database.getCatalog();
+        int tableId = t.getRecordId().getPageId().getTableId();
+        DbFile file = log.getDatabaseFile(tableId);
+        // TODO(patrick) delete tuples will acquire lock.
+        ArrayList<Page> pages = file.deleteTuple(tid, t);
+        synchronized (this) {
+            for (Page page : pages) {
+                page.markDirty(true, tid);
+                this.pages.put(page.getId(), page);
+            }
+        }
     }
 
     /**
