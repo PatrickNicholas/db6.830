@@ -22,6 +22,9 @@ public class HeapPage implements Page {
     byte[] oldData;
     private final Byte oldDataLock = (byte) 0;
 
+    boolean dirty;
+    TransactionId dirtyOwnerId;
+
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
      * The format of a HeapPage is a set of header bytes indicating
@@ -246,8 +249,14 @@ public class HeapPage implements Page {
      *                     already empty.
      */
     public void deleteTuple(Tuple t) throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        RecordId rid = t.getRecordId();
+        int no = rid.getTupleNumber();
+        if (!rid.getPageId().equals(getId()) || !isSlotUsed(no)) {
+            throw new DbException("not found slot in this page");
+        }
+
+        markSlotUsed(no, false);
+        this.tuples[no] = null;
     }
 
     /**
@@ -259,8 +268,24 @@ public class HeapPage implements Page {
      *                     is mismatch.
      */
     public void insertTuple(Tuple t) throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        // FIXME(patrick) tuple desc is mismatch.
+        int slot = 0;
+        for (byte h : header) {
+            int offset = Utility.ffs((byte) ~h);
+            if (offset != -1) {
+                slot += offset;
+                assert !isSlotUsed(slot);
+                RecordId rid = new RecordId(pid, slot);
+                t.setRecordId(rid);
+                tuples[slot] = t;
+                markSlotUsed(slot, true);
+                assert isSlotUsed(slot);
+                return;
+            }
+            slot += 8;
+        }
+
+        throw new DbException("this page is full");
     }
 
     /**
@@ -268,17 +293,19 @@ public class HeapPage implements Page {
      * that did the dirtying
      */
     public void markDirty(boolean dirty, TransactionId tid) {
-        // some code goes here
-        // not necessary for lab1
+        this.dirty = dirty;
+        if (this.dirty) {
+            dirtyOwnerId = tid;
+        } else {
+            dirtyOwnerId = null;
+        }
     }
 
     /**
      * Returns the tid of the transaction that last dirtied this page, or null if the page is not dirty
      */
     public TransactionId isDirty() {
-        // some code goes here
-        // Not necessary for lab1
-        return null;
+        return dirtyOwnerId;
     }
 
     /**
@@ -321,7 +348,7 @@ public class HeapPage implements Page {
         int idx = i / 8;
         byte rem = (byte) (i % 8);
         if (value) {
-            this.header[idx] = (byte) (this.header[idx] | ((byte)1 << rem));
+            this.header[idx] = (byte) (this.header[idx] | ((byte) 1 << rem));
         } else {
             this.header[idx] = (byte) (this.header[idx] & (~(1 << rem)));
         }
