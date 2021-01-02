@@ -300,6 +300,7 @@
             <test name="simpledb.systemtest.AggregateTest"/>
             <test name="simpledb.systemtest.DeleteTest"/>
             <test name="simpledb.systemtest.InsertTest"/>
+            <test name="simpledb.systemtest.EvictionTest"/>
         </RunJunit>
     </target>
 

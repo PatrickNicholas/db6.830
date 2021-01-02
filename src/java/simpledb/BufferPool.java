@@ -2,8 +2,7 @@ package simpledb;
 
 import java.io.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -18,6 +17,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Threadsafe, all fields are final
  */
 public class BufferPool {
+    public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+        private int cacheSize;
+
+        public LRUCache(int cacheSize) {
+            super(16, (float) 0.75, true);
+            this.cacheSize = cacheSize;
+        }
+
+        protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+            return size() >= cacheSize;
+        }
+    }
+
     /**
      * Bytes per page, including header.
      */
@@ -34,6 +46,7 @@ public class BufferPool {
 
     private final int numPages;
     private final HashMap<PageId, Page> pages;
+    private final LinkedHashSet<PageId> recently;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -43,6 +56,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         this.numPages = numPages;
         this.pages = new HashMap<>();
+        this.recently = new LinkedHashSet<>();
     }
 
     public static int getPageSize() {
@@ -79,14 +93,11 @@ public class BufferPool {
         synchronized (this) {
             Page page = this.pages.get(pid);
             if (page == null) {
-                if (this.pages.size() > numPages) {
-                    throw new DbException("too many pages");
-                }
                 // FIXME(patrick) performance.
                 Catalog log = Database.getCatalog();
                 DbFile file = log.getDatabaseFile(pid.getTableId());
                 page = file.readPage(pid);
-                this.pages.put(pid, page);
+                addPage(page);
             }
             return page;
         }
@@ -157,12 +168,11 @@ public class BufferPool {
             throws DbException, IOException, TransactionAbortedException {
         Catalog log = Database.getCatalog();
         DbFile file = log.getDatabaseFile(tableId);
-        // TODO(patrick) delete tuples will acquire lock.
-        ArrayList<Page> pages = file.insertTuple(tid, t);
         synchronized (this) {
+            ArrayList<Page> pages = file.insertTuple(tid, t);
             for (Page page : pages) {
                 page.markDirty(true, tid);
-                this.pages.put(page.getId(), page);
+                putPage(page);
             }
         }
     }
@@ -185,12 +195,11 @@ public class BufferPool {
         Catalog log = Database.getCatalog();
         int tableId = t.getRecordId().getPageId().getTableId();
         DbFile file = log.getDatabaseFile(tableId);
-        // TODO(patrick) delete tuples will acquire lock.
-        ArrayList<Page> pages = file.deleteTuple(tid, t);
         synchronized (this) {
+            ArrayList<Page> pages = file.deleteTuple(tid, t);
             for (Page page : pages) {
                 page.markDirty(true, tid);
-                this.pages.put(page.getId(), page);
+                putPage(page);
             }
         }
     }
@@ -201,9 +210,9 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for lab1
-
+        for (PageId pid : pages.keySet()) {
+            flushPage(pid);
+        }
     }
 
     /**
@@ -216,8 +225,8 @@ public class BufferPool {
      * are removed from the cache so they can be reused safely
      */
     public synchronized void discardPage(PageId pid) {
-        // some code goes here
-        // not necessary for lab1
+        pages.remove(pid);
+        recently.remove(pid);
     }
 
     /**
@@ -226,16 +235,27 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        Page page = pages.get(pid);
+        if (page == null || page.isDirty() == null) {
+            return;
+        }
+
+        DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
+        file.writePage(page);
     }
 
     /**
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2
+        for (PageId pid : pages.keySet()) {
+            Page page = pages.get(pid);
+            if (page == null || page.isDirty() != tid) {
+                continue;
+            }
+            DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
+            file.writePage(page);
+        }
     }
 
     /**
@@ -243,8 +263,45 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        assert recently.size() > 1;
+        PageId pageId = recently.iterator().next();
+        Page page = pages.get(pageId);
+        assert page != null;
+        if (page.isDirty() != null) {
+            DbFile file = Database.getCatalog().getDatabaseFile(pageId.getTableId());
+            try {
+                file.writePage(page);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        recently.remove(pageId);
+        pages.remove(pageId);
+    }
+
+    private synchronized void addPage(Page page) throws DbException {
+        if (pages.size() >= DEFAULT_PAGES) {
+            evictPage();
+        }
+
+        recently.add(page.getId());
+        pages.put(page.getId(), page);
+    }
+
+    private synchronized void updatePage(Page page) {
+        PageId pageId = page.getId();
+        assert pages.containsKey(pageId);
+        recently.remove(page.getId());
+        recently.add(page.getId());
+        pages.put(pageId, page);
+    }
+
+    private synchronized void putPage(Page page) throws DbException {
+        if (pages.containsKey(page.getId())) {
+            updatePage(page);
+        } else {
+            addPage(page);
+        }
     }
 
 }
