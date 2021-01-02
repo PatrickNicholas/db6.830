@@ -153,5 +153,27 @@ public class Utility {
         }
         return out;
     }
+
+    public static int ffs(byte h) {
+        byte p = (byte) (h & -h);
+        if (p == 0) {
+            return -1;
+        }
+        int r = 8;
+        if ((p & 0xf0) == 0) {
+            p <<= 4;
+            r -= 4;
+        }
+        if ((p & 0xc0) == 0) {
+            p <<= 2;
+            r -= 2;
+        }
+        if ((p & 0x80) == 0) {
+            p <<= 1;
+            r -= 1;
+        }
+        return r - 1;
+    }
+
 }
 

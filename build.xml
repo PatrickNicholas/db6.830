@@ -276,6 +276,7 @@
 
     <target name="runtestall" depends="testcompile">
         <RunJunit>
+            <test name="simpledb.UtilityTest"/>
             <test name="simpledb.TupleTest"/>
             <test name="simpledb.TupleDescTest"/>
             <test name="simpledb.CatalogTest"/>
