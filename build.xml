@@ -294,6 +294,7 @@
             <test name="simpledb.HeapFileWriteTest"/>
             <test name="simpledb.BufferPoolWriteTest"/>
             <test name="simpledb.InsertTest"/>
+            <test name="simpledb.IntHistogramTest"/>
             <test name="simpledb.systemtest.ScanTest"/>
             <test name="simpledb.systemtest.FilterTest"/>
             <test name="simpledb.systemtest.JoinTest"/>
